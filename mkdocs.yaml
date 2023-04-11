@@ -1,0 +1,67 @@
+site_name: Mongo Data
+nav:
+  - Structure:
+      - structure/structure.md
+  - Usage:
+      - usage/usage.md
+  - Logging:
+      - logging/logging.md
+  - Testing:
+      - testing/testing.md
+theme:
+  features:
+    - navigation.tabs
+    - navigation.prune
+    - navigation.sections
+
+  name: material
+  palette:
+    primary: black
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    code: Ubuntu Condensed
+    text: Ubuntu Condensed
+extra:
+  version:
+    provider: mike
+    default: stable
+
+  social:
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:mongo@ebrinktech.com
+      name: Robinson Mgbah
+
+copyright: Copyright &copy; 2023 hub1989
+
+repo_url: https://github.com/hub1989/mongo-data
+repo_name: hub1989/mongo-data
+
+plugins:
+  - search
+  - mike
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+
+  - git-committers:
+      repository: hub1989/mongo-data
+      branch: develop
+
+  - git-authors
+  - tags:
+      folder: auxiliary
+      tags_extra_files:
+        compatibility.md:
+          - compat
+        web.md:
+          - html
+          - js
+          - css
+
+  - awesome-pages
+  - techdocs-core
+
+markdown_extensions:
+  - attr_list
+  - md_in_html

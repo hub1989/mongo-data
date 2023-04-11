@@ -2,6 +2,12 @@ name: CI Pipeline
 run-name: ${{ github.actor }} is running tests 🚀
 on:
   push:
+    paths-ignore:
+      - 'README.md'
+      - 'site/*'
+      - '.cache'
+      - 'aux'
+      - 'mkdocs.yaml'
     branches:
       - 'main'
 

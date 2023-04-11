@@ -2,7 +2,7 @@
 Provides an easy to use implementation of a mongo repository. Using generics, you can plug in your mongo Documents, get functionality out of the box and reduce boilerplate.
 
 [![hub1989 - mongo-data](https://img.shields.io/static/v1?label=hub1989&message=mongo-data&color=blue&logo=github)](https://github.com/hub1989/mongo-data "Go to GitHub repo")
-![Coverage](https://github.com/hub1989/mongo-data/blob/badge/badge.svg?branch=badge)
+![Coverage](https://github.com/hub1989/mongo-data/blob/badges/badge.svg?branch=badges)
 [![stars - mongo-data](https://img.shields.io/github/stars/hub1989/mongo-data?style=social)](https://github.com/hub1989/mongo-data)
 [![forks - mongo-data](https://img.shields.io/github/forks/hub1989/mongo-data?style=social)](https://github.com/hub1989/mongo-data)
 

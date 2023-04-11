@@ -189,3 +189,6 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/go,goland+all,intellij+all,visualstudiocode
 
 .env
+aux
+site
+.cache

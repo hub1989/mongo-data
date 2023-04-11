@@ -28,21 +28,21 @@ func (t TestEntity) SetId(id primitive.ObjectID) {
 	t.Id = id
 }
 
-type DeliveryTestSuite struct {
+type EntityTestSuite struct {
 	suite.Suite
 	MongoURI string
 	MongoRepository[TestEntity]
 	*mongo.Collection
 }
 
-func (s *DeliveryTestSuite) TearDownTest() {
+func (s *EntityTestSuite) TearDownTest() {
 	_, err := s.Collection.DeleteMany(context.Background(), bson.M{})
 	if err != nil {
 		log.Error(err)
 	}
 }
 
-func (s *DeliveryTestSuite) SetupSuite() {
+func (s *EntityTestSuite) SetupSuite() {
 	port := "27017/tcp"
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
@@ -79,7 +79,7 @@ func (s *DeliveryTestSuite) SetupSuite() {
 	s.MongoRepository = repository
 }
 
-func (s *DeliveryTestSuite) TestCreateDelivery() {
+func (s *EntityTestSuite) TestMongoRepository_Create() {
 	request := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test",
@@ -95,7 +95,7 @@ func (s *DeliveryTestSuite) TestCreateDelivery() {
 	s.Equal(request.Name, fromDB.Name)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_SaveMany() {
+func (s *EntityTestSuite) TestMongoRepository_SaveMany() {
 	request1 := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test 1",
@@ -125,7 +125,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_SaveMany() {
 	s.Equal(2, len(inDB))
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_Update() {
+func (s *EntityTestSuite) TestMongoRepository_Update() {
 	request := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test",
@@ -142,7 +142,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_Update() {
 	s.Equal(saved.Name, updated.Name)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_UpdateMany() {
+func (s *EntityTestSuite) TestMongoRepository_UpdateMany() {
 	request := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test",
@@ -160,7 +160,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_UpdateMany() {
 	s.Equal(saved.Name, updated[0].Name)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_FindById() {
+func (s *EntityTestSuite) TestMongoRepository_FindById() {
 	request := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test",
@@ -177,7 +177,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_FindById() {
 	assert.Equal(s.T(), request.Id, entityFound.Id)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_FindByIds() {
+func (s *EntityTestSuite) TestMongoRepository_FindByIds() {
 	request1 := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test 1",
@@ -200,7 +200,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_FindByIds() {
 	s.Equal(2, len(inDB))
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_Delete() {
+func (s *EntityTestSuite) TestMongoRepository_Delete() {
 	id := primitive.NewObjectID()
 
 	request := TestEntity{
@@ -221,7 +221,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_Delete() {
 	s.NotNil(err)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_DeleteMany() {
+func (s *EntityTestSuite) TestMongoRepository_DeleteMany() {
 	id := primitive.NewObjectID()
 
 	request := TestEntity{
@@ -242,7 +242,7 @@ func (s *DeliveryTestSuite) TestMongoRepository_DeleteMany() {
 	s.NotNil(err)
 }
 
-func (s *DeliveryTestSuite) TestMongoRepository_FindAllByPageable() {
+func (s *EntityTestSuite) TestMongoRepository_FindAllByPageable() {
 	request1 := TestEntity{
 		Id:   primitive.NewObjectID(),
 		Name: "test 1",
@@ -279,5 +279,5 @@ func (s *DeliveryTestSuite) TestMongoRepository_FindAllByPageable() {
 }
 
 func TestDeliveryTestSuite(t *testing.T) {
-	suite.Run(t, new(DeliveryTestSuite))
+	suite.Run(t, new(EntityTestSuite))
 }

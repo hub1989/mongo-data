@@ -1,0 +1,12 @@
+---
+tags:
+ - welcome
+ - getting started
+---
+
+# Home
+Provides an easy-to-use implementation of a mongo repository. Using generics, you can plug in your mongo Documents, get functionality out of the box and reduce boilerplate.
+
+
+## Who do I talk to? ###
+- Robinson Mgbah - mongo@ebrinktech.com
