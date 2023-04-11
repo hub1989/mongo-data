@@ -35,9 +35,9 @@ jobs:
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
           git fetch
-          git checkout badge -f
+          git checkout badge
           git pull
-          git merge origin/main
+          git merge main
           curl "https://img.shields.io/badge/coverage-$COVERAGE%25-$COLOR" > badge.svg
           git add .
           git commit -m "added badge"
