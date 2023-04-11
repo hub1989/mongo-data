@@ -43,7 +43,7 @@ jobs:
           git commit -m "added badge"
           git push
 
-bump-version:
+  bump-version:
     name: Bump Version
     runs-on: ubuntu-latest
     needs:
