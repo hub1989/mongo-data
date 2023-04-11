@@ -33,11 +33,10 @@ jobs:
           curl "https://img.shields.io/badge/coverage-$COVERAGE%25-$COLOR" > badge.svg
           
           git fetch
-          git checkout badge -f
+          git checkout badges -f
           git pull
-          git merge origin/main
           curl "https://img.shields.io/badge/coverage-$COVERAGE%25-$COLOR" > badge.svg
-          git add .
+          git add badge.svg
           git commit -m "added badge"
           git push
 
