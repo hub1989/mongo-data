@@ -31,7 +31,10 @@ jobs:
           COLOR=green
           fi
           curl "https://img.shields.io/badge/coverage-$COVERAGE%25-$COLOR" > badge.svg
-          
+  
+  
+          git config --global user.email ${{ github.actor }}@users.noreply.github.com 
+          git config --global user.name ${{ github.actor }}
           git fetch
           git checkout badges -f
           git pull
