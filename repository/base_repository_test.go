@@ -278,6 +278,6 @@ func (s *EntityTestSuite) TestMongoRepository_FindAllByPageable() {
 	s.NotEqual(page1.Data[0].Id.Hex(), page2.Data[0].Id.Hex())
 }
 
-func TestDeliveryTestSuite(t *testing.T) {
+func TestEntityTestSuite(t *testing.T) {
 	suite.Run(t, new(EntityTestSuite))
 }

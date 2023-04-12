@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Repository base repository interface
 type Repository[T base_entity.Entity] interface {
 	Save(ctx context.Context, entity T) (*T, error)
 	SaveMany(ctx context.Context, entities []interface{}) ([]string, error)
@@ -26,10 +27,13 @@ type Repository[T base_entity.Entity] interface {
 	FindAllPageable(request base_entity.PageableDBRequest, ctx context.Context) (*base_entity.PageableDBResponse[T], error)
 }
 
+// MongoRepository Default implementation of the base repository interface
+// You can always supply a custom implementation to suite your needs
 type MongoRepository[T base_entity.Entity] struct {
 	Collection *mongo.Collection
 }
 
+// Save create a new document
 func (p MongoRepository[T]) Save(ctx context.Context, entity T) (*T, error) {
 	res, err := p.Collection.InsertOne(ctx, entity)
 
@@ -45,6 +49,7 @@ func (p MongoRepository[T]) Save(ctx context.Context, entity T) (*T, error) {
 	return &entity, nil
 }
 
+// SaveMany create many documents
 func (p MongoRepository[T]) SaveMany(ctx context.Context, entities []interface{}) ([]string, error) {
 	res, err := p.Collection.InsertMany(ctx, entities)
 
@@ -66,6 +71,7 @@ func (p MongoRepository[T]) SaveMany(ctx context.Context, entities []interface{}
 	return ids, nil
 }
 
+// Update an existing document
 func (p MongoRepository[T]) Update(ctx context.Context, entity T) (*T, error) {
 
 	idFilter := bson.M{
@@ -87,6 +93,7 @@ func (p MongoRepository[T]) Update(ctx context.Context, entity T) (*T, error) {
 	return &entity, nil
 }
 
+// UpdateMany many existing documents
 func (p MongoRepository[T]) UpdateMany(ctx context.Context, entities []T) ([]*T, error) {
 	var result []*T
 	for _, entity := range entities {
@@ -101,15 +108,18 @@ func (p MongoRepository[T]) UpdateMany(ctx context.Context, entities []T) ([]*T,
 	return result, nil
 }
 
+// FindById find by _id
 func (p MongoRepository[T]) FindById(ctx context.Context, id primitive.ObjectID) (*T, error) {
 	filter := bson.M{"_id": id}
 	return p.FindEntityDocumentByFilter(ctx, filter)
 }
 
+// Delete an existing document
 func (p MongoRepository[T]) Delete(ctx context.Context, id primitive.ObjectID) error {
 	return p.DeleteMany(ctx, []primitive.ObjectID{id})
 }
 
+// DeleteMany delete many existing documents
 func (p MongoRepository[T]) DeleteMany(ctx context.Context, ids []primitive.ObjectID) error {
 	filter := bson.M{
 		"_id": bson.M{
@@ -130,6 +140,7 @@ func (p MongoRepository[T]) DeleteMany(ctx context.Context, ids []primitive.Obje
 	return nil
 }
 
+// FindByIds find a list of documents by ids
 func (p MongoRepository[T]) FindByIds(ctx context.Context, ids []primitive.ObjectID) ([]*T, error) {
 	filter := bson.M{
 		"_id": bson.M{
@@ -140,6 +151,7 @@ func (p MongoRepository[T]) FindByIds(ctx context.Context, ids []primitive.Objec
 	return p.FindEntityDocumentsByFilter(ctx, filter)
 }
 
+// FindEntityDocumentsByFilter find a list of documents by filter
 func (p MongoRepository[T]) FindEntityDocumentsByFilter(ctx context.Context, filter bson.M, opts ...*options.FindOptions) ([]*T, error) {
 	var records []*T
 
@@ -151,6 +163,7 @@ func (p MongoRepository[T]) FindEntityDocumentsByFilter(ctx context.Context, fil
 	return p.handleResultCursorForPointer(reslts, ctx, records)
 }
 
+// FindEntityDocumentsByFilterForObject find 1 document by filter
 func (p MongoRepository[T]) FindEntityDocumentsByFilterForObject(ctx context.Context, filter bson.M, opts ...*options.FindOptions) ([]T, error) {
 	var records []T
 

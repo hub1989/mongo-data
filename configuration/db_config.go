@@ -10,17 +10,21 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 )
 
+// DBConfigService configuration interface for
 type DBConfigService interface {
 	ConnectDB(mongoURI string) *mongo.Client
 	GetCollection(client *mongo.Client, collectionName string) *mongo.Collection
-	CreateDeliveryIndexes(db *mongo.Client) error
+	CreateIndexes(db *mongo.Client) error
 }
 
+// DefaultDBConfigService a default bare-bones configuration service.
+// You can pass your own implementation
 type DefaultDBConfigService struct {
 	MongoURI     string
 	DatabaseName string
 }
 
+// ConnectDB connect to database
 func (d DefaultDBConfigService) ConnectDB() *mongo.Client {
 	clientOptions := options.Client()
 	clientOptions.ApplyURI(d.MongoURI)
@@ -39,11 +43,13 @@ func (d DefaultDBConfigService) ConnectDB() *mongo.Client {
 	return client
 }
 
+// GetCollection get a mongo collection by collection name
 func (d DefaultDBConfigService) GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	collection := client.Database(d.DatabaseName).Collection(collectionName)
 	return collection
 }
 
+// CreateIndexesForCollection create indexes for your collection
 func (d DefaultDBConfigService) CreateIndexesForCollection(db *mongo.Client, collectionName string, indexes ...mongo.IndexModel) error {
 	collection := d.GetCollection(db, collectionName)
 	ctx := context.Background()
