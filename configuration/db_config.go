@@ -12,7 +12,7 @@ import (
 
 // DBConfigService configuration interface for
 type DBConfigService interface {
-	ConnectDB(mongoURI string) *mongo.Client
+	ConnectDB(mongoURI string) (*mongo.Client, error)
 	GetCollection(client *mongo.Client, collectionName string) *mongo.Collection
 	CreateIndexes(db *mongo.Client) error
 }
@@ -25,22 +25,23 @@ type DefaultDBConfigService struct {
 }
 
 // ConnectDB connect to database
-func (d DefaultDBConfigService) ConnectDB() *mongo.Client {
+// returns an error if the operation fails
+func (d DefaultDBConfigService) ConnectDB() (*mongo.Client, error) {
 	clientOptions := options.Client()
 	clientOptions.ApplyURI(d.MongoURI)
 	clientOptions.Monitor = otelmongo.NewMonitor()
 
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if err := client.Ping(context.Background(), readpref.Primary()); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	log.Info("connected to DB: ", d.DatabaseName)
-	return client
+	return client, nil
 }
 
 // GetCollection get a mongo collection by collection name

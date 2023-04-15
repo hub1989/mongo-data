@@ -71,7 +71,11 @@ func (s *EntityTestSuite) SetupSuite() {
 		MongoURI:     s.MongoURI,
 		DatabaseName: "test-db",
 	}
-	client := configService.ConnectDB()
+	client, err := configService.ConnectDB()
+	if err != nil {
+		s.Error(err)
+		return
+	}
 
 	collection := client.Database(configService.DatabaseName).Collection("test_entities")
 	s.Collection = collection
