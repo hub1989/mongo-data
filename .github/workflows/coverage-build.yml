@@ -45,7 +45,7 @@ jobs:
           rm -rf badge.svg
           curl "https://img.shields.io/badge/coverage-$COVERAGE%25-$COLOR" > badge.svg
           git add -A
-          git commit -m "added badge"
+          git commit -m "added badge" --allow-empty
           git push
 
   bump-version:
