@@ -1,0 +1,32 @@
+name: CI Pipeline
+run-name: ${{ github.actor }} is running go update 🚀
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout code
+
+      - uses: actions/setup-go@v4
+        name: Setup go
+        with:
+          version: '1.21'
+          cache: true
+      - run: go version
+
+      - name: run tests
+        continue-on-error: true
+        run: |
+          go get -u ./...
+          go test ./...
+          
+          git config --global user.email ${{ github.actor }}@users.noreply.github.com 
+          git config --global user.name ${{ github.actor }}
+          
+          git add -A
+          git commit -m "updated dependencies" 
+          git push
