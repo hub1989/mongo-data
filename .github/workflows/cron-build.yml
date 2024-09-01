@@ -8,10 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.7
         name: Checkout code
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5.0.2
         name: Setup go
         with:
           cache: true
