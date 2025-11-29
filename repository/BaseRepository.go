@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
 	"github.com/hub1989/mongo-data/base_entity"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,6 +18,7 @@ type Repository[T base_entity.Entity] interface {
 	Save(ctx context.Context, entity T) (*T, error)
 	SaveMany(ctx context.Context, entities []interface{}) ([]string, error)
 	Update(ctx context.Context, entity T) (*T, error)
+	UpdateOne(ctx context.Context, filter bson.M, update bson.M) error
 	UpdateMany(ctx context.Context, entities []T) ([]*T, error)
 	FindById(ctx context.Context, id primitive.ObjectID) (*T, error)
 	Delete(ctx context.Context, id primitive.ObjectID) error
@@ -25,6 +28,10 @@ type Repository[T base_entity.Entity] interface {
 	FindEntityDocumentByFilter(ctx context.Context, filter bson.M) (*T, error)
 	CountDocumentsInCollected(ctx context.Context) (int64, error)
 	FindAllPageable(request base_entity.PageableDBRequest, ctx context.Context) (*base_entity.PageableDBResponse[T], error)
+
+	HandleResultCursorForObject(records *mongo.Cursor, ctx context.Context, entities []T) ([]T, error)
+	Aggregate(ctx context.Context, pipeline mongo.Pipeline) (*mongo.Cursor, error)
+	AggregateForEntity(ctx context.Context, pipeline mongo.Pipeline) ([]*T, error)
 }
 
 // MongoRepository Default implementation of the base repository interface
@@ -172,7 +179,7 @@ func (p MongoRepository[T]) FindEntityDocumentsByFilterForObject(ctx context.Con
 		return nil, err
 	}
 
-	return p.handleResultCursorForObject(reslts, ctx, records)
+	return p.HandleResultCursorForObject(reslts, ctx, records)
 }
 
 func (p MongoRepository[T]) FindEntityDocumentByFilter(ctx context.Context, filter bson.M) (*T, error) {
@@ -255,7 +262,7 @@ func (p MongoRepository[T]) handleResultCursorForPointer(records *mongo.Cursor, 
 	return entities, nil
 }
 
-func (p MongoRepository[T]) handleResultCursorForObject(records *mongo.Cursor, ctx context.Context, entities []T) ([]T, error) {
+func (p MongoRepository[T]) HandleResultCursorForObject(records *mongo.Cursor, ctx context.Context, entities []T) ([]T, error) {
 	defer records.Close(ctx)
 	for records.Next(ctx) {
 		var entity T
@@ -267,4 +274,35 @@ func (p MongoRepository[T]) handleResultCursorForObject(records *mongo.Cursor, c
 	}
 
 	return entities, nil
+}
+
+func (p MongoRepository[T]) Aggregate(ctx context.Context, pipeline mongo.Pipeline) (*mongo.Cursor, error) {
+	return p.Collection.Aggregate(ctx, pipeline)
+}
+
+func (p MongoRepository[T]) AggregateForEntity(ctx context.Context, pipeline mongo.Pipeline) ([]*T, error) {
+	var records []*T
+	data, err := p.Collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.handleResultCursorForPointer(data, ctx, records)
+}
+
+func (p MongoRepository[T]) CountByFilter(ctx context.Context, filter bson.M) (int64, error) {
+	return p.Collection.CountDocuments(ctx, filter)
+}
+
+func (p MongoRepository[T]) UpdateOne(ctx context.Context, filter bson.M, update bson.M) error {
+	res, err := p.Collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 || res.ModifiedCount == 0 {
+		return errors.New(fmt.Sprintf("could not update for filter: %v", update))
+	}
+
+	return nil
 }

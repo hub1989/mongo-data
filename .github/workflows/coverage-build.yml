@@ -15,10 +15,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v5.0.1
         name: Checkout code
 
-      - uses: actions/setup-go@v5.0.2
+      - uses: actions/setup-go@v6
         name: Setup go
         with:
           cache: true
@@ -53,7 +53,7 @@ jobs:
     needs:
       - test
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5.0.1
       - name: Bump version && push tag
         uses: hennejg/github-tag-action@v4.3.1
         with:

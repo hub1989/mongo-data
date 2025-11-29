@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hub1989/mongo-data/base_entity"
 	"github.com/hub1989/mongo-data/configuration"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"testing"
 )
 
 type TestEntity struct {
@@ -280,6 +281,189 @@ func (s *EntityTestSuite) TestMongoRepository_FindAllByPageable() {
 	s.Nil(err)
 	s.Equal(int64(1), page2.NoOfItemsInBatch)
 	s.NotEqual(page1.Data[0].Id.Hex(), page2.Data[0].Id.Hex())
+}
+
+/*
+   NEW TESTS FOR PREVIOUSLY UNTESTED METHODS
+*/
+
+func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilter() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "alpha"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "beta"}
+	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "alpha"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2, e3)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	filter := bson.M{"name": "alpha"}
+
+	results, err := s.MongoRepository.FindEntityDocumentsByFilter(ctx, filter)
+	s.Nil(err)
+	s.Len(results, 2)
+	s.ElementsMatch(
+		[]string{e1.Id.Hex(), e3.Id.Hex()},
+		[]string{results[0].Id.Hex(), results[1].Id.Hex()},
+	)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilterForObject() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "foo"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "bar"}
+	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "foo"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2, e3)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	filter := bson.M{"name": "foo"}
+
+	results, err := s.MongoRepository.FindEntityDocumentsByFilterForObject(ctx, filter)
+	s.Nil(err)
+	s.Len(results, 2)
+
+	ids := []string{results[0].Id.Hex(), results[1].Id.Hex()}
+	s.ElementsMatch([]string{e1.Id.Hex(), e3.Id.Hex()}, ids)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentByFilter() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "unique-name"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "other-name"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	filter := bson.M{"name": "unique-name"}
+
+	result, err := s.MongoRepository.FindEntityDocumentByFilter(ctx, filter)
+	s.Nil(err)
+	s.NotNil(result)
+	s.Equal(e1.Id, result.Id)
+	s.Equal(e1.Name, result.Name)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_CountByFilter() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "count-me"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "count-me"}
+	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "dont-count-me"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2, e3)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	count, err := s.MongoRepository.CountByFilter(ctx, bson.M{"name": "count-me"})
+	s.Nil(err)
+	s.Equal(int64(2), count)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_Aggregate() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "agg"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "agg"}
+	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "other"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2, e3)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "name", Value: "agg"}}}},
+	}
+
+	cursor, err := s.MongoRepository.Aggregate(ctx, pipeline)
+	s.Nil(err)
+	s.NotNil(cursor)
+
+	defer cursor.Close(ctx)
+
+	var results []TestEntity
+	for cursor.Next(ctx) {
+		var doc TestEntity
+		err := cursor.Decode(&doc)
+		s.Nil(err)
+		results = append(results, doc)
+	}
+
+	s.Len(results, 2)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_AggregateForEntity() {
+	ctx := context.Background()
+
+	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "agg-entity"}
+	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "agg-entity"}
+	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "not-in-agg"}
+
+	var entities []interface{}
+	entities = append(entities, e1, e2, e3)
+
+	_, err := s.MongoRepository.SaveMany(ctx, entities)
+	s.Nil(err)
+
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "name", Value: "agg-entity"}}}},
+	}
+
+	results, err := s.MongoRepository.AggregateForEntity(ctx, pipeline)
+	s.Nil(err)
+	s.Len(results, 2)
+
+	names := []string{results[0].Name, results[1].Name}
+	s.ElementsMatch([]string{"agg-entity", "agg-entity"}, names)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_UpdateOne_Success() {
+	ctx := context.Background()
+
+	entity := TestEntity{
+		Id:   primitive.NewObjectID(),
+		Name: "before",
+	}
+
+	_, err := s.MongoRepository.Save(ctx, entity)
+	s.Nil(err)
+
+	filter := bson.M{"_id": entity.Id}
+	update := bson.M{"$set": bson.M{"name": "after"}}
+
+	err = s.MongoRepository.UpdateOne(ctx, filter, update)
+	s.Nil(err)
+
+	fromDB, err := s.MongoRepository.FindById(ctx, entity.Id)
+	s.Nil(err)
+	s.Equal("after", fromDB.Name)
+}
+
+func (s *EntityTestSuite) TestMongoRepository_UpdateOne_NoMatch() {
+	ctx := context.Background()
+
+	nonExistingID := primitive.NewObjectID()
+	filter := bson.M{"_id": nonExistingID}
+	update := bson.M{"$set": bson.M{"name": "will-not-apply"}}
+
+	err := s.MongoRepository.UpdateOne(ctx, filter, update)
+	s.NotNil(err)
+	s.Contains(err.Error(), "could not update for filter")
 }
 
 func TestEntityTestSuite(t *testing.T) {
