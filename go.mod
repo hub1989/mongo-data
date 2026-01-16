@@ -3,7 +3,7 @@ module github.com/hub1989/mongo-data
 go 1.25.4
 
 require (
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
 	go.mongodb.org/mongo-driver v1.17.6
