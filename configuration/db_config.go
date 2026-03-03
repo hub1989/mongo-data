@@ -3,11 +3,11 @@ package configuration
 import (
 	"context"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
 // DBConfigService configuration interface for
@@ -29,9 +29,8 @@ type DefaultDBConfigService struct {
 func (d DefaultDBConfigService) ConnectDB() (*mongo.Client, error) {
 	clientOptions := options.Client()
 	clientOptions.ApplyURI(d.MongoURI)
-	clientOptions.Monitor = otelmongo.NewMonitor()
 
-	client, err := mongo.Connect(context.Background(), clientOptions)
+	client, err := mongo.Connect(clientOptions)
 	if err != nil {
 		return nil, err
 	}

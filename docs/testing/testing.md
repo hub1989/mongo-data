@@ -13,15 +13,15 @@ tags:
 - define an entity/document type you'd like to test for
 ```go
 type TestEntity struct {
-	Id   primitive.ObjectID `bson:"_id" json:"id"`
+	Id   bson.ObjectID `bson:"_id" json:"id"`
 	Name string             `bson:"name" json:"name"`
 }
 
-func (t TestEntity) GetId() primitive.ObjectID {
+func (t TestEntity) GetId() bson.ObjectID {
 	return t.Id
 }
 
-func (t TestEntity) SetId(id primitive.ObjectID) {
+func (t TestEntity) SetId(id bson.ObjectID) {
 	t.Id = id
 }
 ```
@@ -69,7 +69,7 @@ func (s *EntityTestSuite) SetupSuite() {
 ```go
 func (s *EntityTestSuite) TestMongoRepository_Create() {
 	request := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test",
 	}
 

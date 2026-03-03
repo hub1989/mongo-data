@@ -7,10 +7,9 @@ import (
 
 	"github.com/hub1989/mongo-data/base_entity"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // Repository base repository interface
@@ -20,11 +19,11 @@ type Repository[T base_entity.Entity] interface {
 	Update(ctx context.Context, entity T) (*T, error)
 	UpdateOne(ctx context.Context, filter bson.M, update bson.M) error
 	UpdateMany(ctx context.Context, entities []T) ([]*T, error)
-	FindById(ctx context.Context, id primitive.ObjectID) (*T, error)
-	Delete(ctx context.Context, id primitive.ObjectID) error
-	DeleteMany(ctx context.Context, ids []primitive.ObjectID) error
-	FindByIds(ctx context.Context, ids []primitive.ObjectID) ([]*T, error)
-	FindEntityDocumentsByFilter(ctx context.Context, filter bson.M, opts ...*options.FindOptions) ([]*T, error)
+	FindById(ctx context.Context, id bson.ObjectID) (*T, error)
+	Delete(ctx context.Context, id bson.ObjectID) error
+	DeleteMany(ctx context.Context, ids []bson.ObjectID) error
+	FindByIds(ctx context.Context, ids []bson.ObjectID) ([]*T, error)
+	FindEntityDocumentsByFilter(ctx context.Context, filter bson.M, opts ...options.Lister[options.FindOptions]) ([]*T, error)
 	FindEntityDocumentByFilter(ctx context.Context, filter bson.M) (*T, error)
 	CountDocumentsInCollected(ctx context.Context) (int64, error)
 	FindAllPageable(request base_entity.PageableDBRequest, ctx context.Context) (*base_entity.PageableDBResponse[T], error)
@@ -67,7 +66,7 @@ func (p MongoRepository[T]) SaveMany(ctx context.Context, entities []interface{}
 
 	var ids []string
 	for _, objId := range res.InsertedIDs {
-		id := objId.(primitive.ObjectID)
+		id := objId.(bson.ObjectID)
 		ids = append(ids, id.Hex())
 	}
 
@@ -89,7 +88,7 @@ func (p MongoRepository[T]) Update(ctx context.Context, entity T) (*T, error) {
 		"$set": entity,
 	}
 
-	opts := options.Update().SetUpsert(true)
+	opts := options.UpdateOne().SetUpsert(true)
 
 	result, err := p.Collection.UpdateOne(ctx, idFilter, updateFilter, opts)
 
@@ -116,18 +115,18 @@ func (p MongoRepository[T]) UpdateMany(ctx context.Context, entities []T) ([]*T,
 }
 
 // FindById find by _id
-func (p MongoRepository[T]) FindById(ctx context.Context, id primitive.ObjectID) (*T, error) {
+func (p MongoRepository[T]) FindById(ctx context.Context, id bson.ObjectID) (*T, error) {
 	filter := bson.M{"_id": id}
 	return p.FindEntityDocumentByFilter(ctx, filter)
 }
 
 // Delete an existing document
-func (p MongoRepository[T]) Delete(ctx context.Context, id primitive.ObjectID) error {
-	return p.DeleteMany(ctx, []primitive.ObjectID{id})
+func (p MongoRepository[T]) Delete(ctx context.Context, id bson.ObjectID) error {
+	return p.DeleteMany(ctx, []bson.ObjectID{id})
 }
 
 // DeleteMany delete many existing documents
-func (p MongoRepository[T]) DeleteMany(ctx context.Context, ids []primitive.ObjectID) error {
+func (p MongoRepository[T]) DeleteMany(ctx context.Context, ids []bson.ObjectID) error {
 	filter := bson.M{
 		"_id": bson.M{
 			"$in": ids,
@@ -148,7 +147,7 @@ func (p MongoRepository[T]) DeleteMany(ctx context.Context, ids []primitive.Obje
 }
 
 // FindByIds find a list of documents by ids
-func (p MongoRepository[T]) FindByIds(ctx context.Context, ids []primitive.ObjectID) ([]*T, error) {
+func (p MongoRepository[T]) FindByIds(ctx context.Context, ids []bson.ObjectID) ([]*T, error) {
 	filter := bson.M{
 		"_id": bson.M{
 			"$in": ids,
@@ -159,7 +158,7 @@ func (p MongoRepository[T]) FindByIds(ctx context.Context, ids []primitive.Objec
 }
 
 // FindEntityDocumentsByFilter find a list of documents by filter
-func (p MongoRepository[T]) FindEntityDocumentsByFilter(ctx context.Context, filter bson.M, opts ...*options.FindOptions) ([]*T, error) {
+func (p MongoRepository[T]) FindEntityDocumentsByFilter(ctx context.Context, filter bson.M, opts ...options.Lister[options.FindOptions]) ([]*T, error) {
 	var records []*T
 
 	reslts, err := p.Collection.Find(ctx, filter, opts...)
@@ -171,7 +170,7 @@ func (p MongoRepository[T]) FindEntityDocumentsByFilter(ctx context.Context, fil
 }
 
 // FindEntityDocumentsByFilterForObject find 1 document by filter
-func (p MongoRepository[T]) FindEntityDocumentsByFilterForObject(ctx context.Context, filter bson.M, opts ...*options.FindOptions) ([]T, error) {
+func (p MongoRepository[T]) FindEntityDocumentsByFilterForObject(ctx context.Context, filter bson.M, opts ...options.Lister[options.FindOptions]) ([]T, error) {
 	var records []T
 
 	reslts, err := p.Collection.Find(ctx, filter, opts...)
@@ -209,7 +208,7 @@ func (p MongoRepository[T]) FindAllPageable(request base_entity.PageableDBReques
 	}
 
 	if request.LastItemId != "" {
-		obj, err := primitive.ObjectIDFromHex(request.LastItemId)
+		obj, err := bson.ObjectIDFromHex(request.LastItemId)
 		if err != nil {
 			return nil, err
 		}
@@ -221,14 +220,11 @@ func (p MongoRepository[T]) FindAllPageable(request base_entity.PageableDBReques
 		}
 	}
 
-	findOptions := options.FindOptions{
-		Limit: &request.NumberPerPage,
-		Sort: bson.M{
-			"_id": -1,
-		},
-	}
+	findOptions := options.Find().
+		SetLimit(request.NumberPerPage).
+		SetSort(bson.M{"_id": -1})
 
-	response, err := p.FindEntityDocumentsByFilterForObject(ctx, filter, &findOptions)
+	response, err := p.FindEntityDocumentsByFilterForObject(ctx, filter, findOptions)
 	if err != nil {
 		return nil, err
 	}

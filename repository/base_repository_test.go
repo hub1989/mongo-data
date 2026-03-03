@@ -11,21 +11,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type TestEntity struct {
-	Id   primitive.ObjectID `bson:"_id" json:"id"`
-	Name string             `bson:"name" json:"name"`
+	Id   bson.ObjectID `bson:"_id" json:"id"`
+	Name string        `bson:"name" json:"name"`
 }
 
-func (t TestEntity) GetId() primitive.ObjectID {
+func (t TestEntity) GetId() bson.ObjectID {
 	return t.Id
 }
 
-func (t TestEntity) SetId(id primitive.ObjectID) {
+func (t TestEntity) SetId(id bson.ObjectID) {
 	t.Id = id
 }
 
@@ -86,7 +85,7 @@ func (s *EntityTestSuite) SetupSuite() {
 
 func (s *EntityTestSuite) TestMongoRepository_Create() {
 	request := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test",
 	}
 
@@ -102,12 +101,12 @@ func (s *EntityTestSuite) TestMongoRepository_Create() {
 
 func (s *EntityTestSuite) TestMongoRepository_SaveMany() {
 	request1 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 1",
 	}
 
 	request2 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 2",
 	}
 	var entities []interface{}
@@ -124,7 +123,7 @@ func (s *EntityTestSuite) TestMongoRepository_SaveMany() {
 
 	s.Equal(int64(2), noOfDocsInDB)
 
-	inDB, err := s.MongoRepository.FindByIds(context.TODO(), []primitive.ObjectID{request1.Id, request2.Id})
+	inDB, err := s.MongoRepository.FindByIds(context.TODO(), []bson.ObjectID{request1.Id, request2.Id})
 	s.Nil(err)
 
 	s.Equal(2, len(inDB))
@@ -132,7 +131,7 @@ func (s *EntityTestSuite) TestMongoRepository_SaveMany() {
 
 func (s *EntityTestSuite) TestMongoRepository_Update() {
 	request := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test",
 	}
 
@@ -149,7 +148,7 @@ func (s *EntityTestSuite) TestMongoRepository_Update() {
 
 func (s *EntityTestSuite) TestMongoRepository_UpdateMany() {
 	request := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test",
 	}
 
@@ -167,7 +166,7 @@ func (s *EntityTestSuite) TestMongoRepository_UpdateMany() {
 
 func (s *EntityTestSuite) TestMongoRepository_FindById() {
 	request := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test",
 	}
 
@@ -184,12 +183,12 @@ func (s *EntityTestSuite) TestMongoRepository_FindById() {
 
 func (s *EntityTestSuite) TestMongoRepository_FindByIds() {
 	request1 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 1",
 	}
 
 	request2 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 2",
 	}
 	var entities []interface{}
@@ -199,14 +198,14 @@ func (s *EntityTestSuite) TestMongoRepository_FindByIds() {
 	_, err := s.MongoRepository.SaveMany(context.Background(), entities)
 	s.Nil(err)
 
-	inDB, err := s.MongoRepository.FindByIds(context.TODO(), []primitive.ObjectID{request1.Id, request2.Id})
+	inDB, err := s.MongoRepository.FindByIds(context.TODO(), []bson.ObjectID{request1.Id, request2.Id})
 	s.Nil(err)
 
 	s.Equal(2, len(inDB))
 }
 
 func (s *EntityTestSuite) TestMongoRepository_Delete() {
-	id := primitive.NewObjectID()
+	id := bson.NewObjectID()
 
 	request := TestEntity{
 		Id:   id,
@@ -227,7 +226,7 @@ func (s *EntityTestSuite) TestMongoRepository_Delete() {
 }
 
 func (s *EntityTestSuite) TestMongoRepository_DeleteMany() {
-	id := primitive.NewObjectID()
+	id := bson.NewObjectID()
 
 	request := TestEntity{
 		Id:   id,
@@ -240,7 +239,7 @@ func (s *EntityTestSuite) TestMongoRepository_DeleteMany() {
 
 	ctx := context.Background()
 
-	err = s.MongoRepository.DeleteMany(ctx, []primitive.ObjectID{id})
+	err = s.MongoRepository.DeleteMany(ctx, []bson.ObjectID{id})
 	s.Nil(err)
 
 	_, err = s.MongoRepository.FindById(ctx, id)
@@ -249,12 +248,12 @@ func (s *EntityTestSuite) TestMongoRepository_DeleteMany() {
 
 func (s *EntityTestSuite) TestMongoRepository_FindAllByPageable() {
 	request1 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 1",
 	}
 
 	request2 := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "test 2",
 	}
 	var entities []interface{}
@@ -290,9 +289,9 @@ func (s *EntityTestSuite) TestMongoRepository_FindAllByPageable() {
 func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilter() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "alpha"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "beta"}
-	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "alpha"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "alpha"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "beta"}
+	e3 := TestEntity{Id: bson.NewObjectID(), Name: "alpha"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2, e3)
@@ -314,9 +313,9 @@ func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilter() {
 func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilterForObject() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "foo"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "bar"}
-	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "foo"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "foo"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "bar"}
+	e3 := TestEntity{Id: bson.NewObjectID(), Name: "foo"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2, e3)
@@ -337,8 +336,8 @@ func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentsByFilterForObje
 func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentByFilter() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "unique-name"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "other-name"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "unique-name"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "other-name"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2)
@@ -358,9 +357,9 @@ func (s *EntityTestSuite) TestMongoRepository_FindEntityDocumentByFilter() {
 func (s *EntityTestSuite) TestMongoRepository_CountByFilter() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "count-me"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "count-me"}
-	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "dont-count-me"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "count-me"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "count-me"}
+	e3 := TestEntity{Id: bson.NewObjectID(), Name: "dont-count-me"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2, e3)
@@ -376,9 +375,9 @@ func (s *EntityTestSuite) TestMongoRepository_CountByFilter() {
 func (s *EntityTestSuite) TestMongoRepository_Aggregate() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "agg"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "agg"}
-	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "other"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "agg"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "agg"}
+	e3 := TestEntity{Id: bson.NewObjectID(), Name: "other"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2, e3)
@@ -410,9 +409,9 @@ func (s *EntityTestSuite) TestMongoRepository_Aggregate() {
 func (s *EntityTestSuite) TestMongoRepository_AggregateForEntity() {
 	ctx := context.Background()
 
-	e1 := TestEntity{Id: primitive.NewObjectID(), Name: "agg-entity"}
-	e2 := TestEntity{Id: primitive.NewObjectID(), Name: "agg-entity"}
-	e3 := TestEntity{Id: primitive.NewObjectID(), Name: "not-in-agg"}
+	e1 := TestEntity{Id: bson.NewObjectID(), Name: "agg-entity"}
+	e2 := TestEntity{Id: bson.NewObjectID(), Name: "agg-entity"}
+	e3 := TestEntity{Id: bson.NewObjectID(), Name: "not-in-agg"}
 
 	var entities []interface{}
 	entities = append(entities, e1, e2, e3)
@@ -436,7 +435,7 @@ func (s *EntityTestSuite) TestMongoRepository_UpdateOne_Success() {
 	ctx := context.Background()
 
 	entity := TestEntity{
-		Id:   primitive.NewObjectID(),
+		Id:   bson.NewObjectID(),
 		Name: "before",
 	}
 
@@ -457,7 +456,7 @@ func (s *EntityTestSuite) TestMongoRepository_UpdateOne_Success() {
 func (s *EntityTestSuite) TestMongoRepository_UpdateOne_NoMatch() {
 	ctx := context.Background()
 
-	nonExistingID := primitive.NewObjectID()
+	nonExistingID := bson.NewObjectID()
 	filter := bson.M{"_id": nonExistingID}
 	update := bson.M{"$set": bson.M{"name": "will-not-apply"}}
 
