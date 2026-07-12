@@ -69,7 +69,6 @@ func (p MongoRepository[T]) SaveMany(ctx context.Context, entities []interface{}
 		id := objId.(bson.ObjectID)
 		ids = append(ids, id.Hex())
 	}
-
 	log.WithFields(log.Fields{
 		"count": len(ids),
 	}).Info(fmt.Sprintf("saved %s entities", p.Collection.Name()))
