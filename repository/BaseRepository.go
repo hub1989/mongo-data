@@ -34,7 +34,7 @@ type Repository[T base_entity.Entity] interface {
 }
 
 // MongoRepository Default implementation of the base repository interface
-// You can always supply a custom implementation to suite your needs
+// You can always supply a custom implementation to suite your needs.
 type MongoRepository[T base_entity.Entity] struct {
 	Collection *mongo.Collection
 }
