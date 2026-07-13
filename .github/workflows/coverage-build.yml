@@ -61,3 +61,5 @@ jobs:
           github_token: ${{ secrets.GH_PAT }}
           release_branches: 'main'
           default_bump: 'major'
+
+
