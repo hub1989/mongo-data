@@ -1,0 +1,151 @@
+name: "Semantic version tag"
+description: "Bump and push a semver tag using the highest existing semver tag as the base."
+
+inputs:
+  github_token:
+    description: "Token with permission to push tags."
+    required: true
+  default_bump:
+    description: "Bump to use when commits do not indicate major, minor, or patch."
+    required: false
+    default: "patch"
+  tag_prefix:
+    description: "Tag prefix."
+    required: false
+    default: "v"
+  release_branches:
+    description: "Comma-separated branch regexes allowed to push release tags."
+    required: false
+    default: "main"
+  dry_run:
+    description: "Calculate the next tag without pushing it."
+    required: false
+    default: "false"
+
+outputs:
+  previous_tag:
+    description: "Highest existing semver tag used as the base."
+    value: ${{ steps.bump.outputs.previous_tag }}
+  new_tag:
+    description: "Generated tag."
+    value: ${{ steps.bump.outputs.new_tag }}
+  bump:
+    description: "Effective bump type."
+    value: ${{ steps.bump.outputs.bump }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: bump
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        DEFAULT_BUMP: ${{ inputs.default_bump }}
+        TAG_PREFIX: ${{ inputs.tag_prefix }}
+        RELEASE_BRANCHES: ${{ inputs.release_branches }}
+        DRY_RUN: ${{ inputs.dry_run }}
+      run: |
+        set -euo pipefail
+
+        case "$DEFAULT_BUMP" in
+          major|minor|patch) ;;
+          *)
+            echo "::error::default_bump must be one of: major, minor, patch"
+            exit 1
+            ;;
+        esac
+
+        branch="${GITHUB_REF#refs/heads/}"
+        is_release_branch="false"
+        IFS=',' read -ra release_branches <<< "$RELEASE_BRANCHES"
+        for release_branch in "${release_branches[@]}"; do
+          if [[ "$branch" =~ $release_branch ]]; then
+            is_release_branch="true"
+            break
+          fi
+        done
+
+        if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+          git fetch --unshallow
+        fi
+
+        git fetch --force --tags
+
+        previous_tag="$(
+          git tag -l "${TAG_PREFIX}[0-9]*.[0-9]*.[0-9]*" |
+            grep -E "^${TAG_PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" |
+            sort -V |
+            tail -n 1 || true
+        )"
+
+        if [[ -z "$previous_tag" ]]; then
+          previous_tag="${TAG_PREFIX}0.0.0"
+          commit_range="HEAD"
+          current_version="0.0.0"
+        else
+          commit_range="${previous_tag}..HEAD"
+          current_version="${previous_tag#"$TAG_PREFIX"}"
+        fi
+
+        echo "previous_tag=$previous_tag" >> "$GITHUB_OUTPUT"
+        echo "Current semver tag is $previous_tag"
+
+        if [[ "$previous_tag" != "${TAG_PREFIX}0.0.0" ]] && [[ "$(git rev-parse "${previous_tag}^{commit}")" == "$GITHUB_SHA" ]]; then
+          echo "Current HEAD is already tagged by $previous_tag. Skipping."
+          echo "new_tag=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        log="$(git log "$commit_range" --pretty=format:'%s%n%b%n==SEMVER_TAG_COMMIT==')"
+        bump=""
+
+        if grep -Eq '(^|[[:space:]])BREAKING CHANGE:|^[a-zA-Z]+(\([^)]+\))?!:' <<< "$log"; then
+          bump="major"
+        elif grep -Eq '^feat(\([^)]+\))?:' <<< "$log"; then
+          bump="minor"
+        elif grep -Eq '^(fix|perf)(\([^)]+\))?:' <<< "$log"; then
+          bump="patch"
+        else
+          bump="$DEFAULT_BUMP"
+        fi
+
+        echo "bump=$bump" >> "$GITHUB_OUTPUT"
+        echo "Effective bump type: $bump"
+
+        IFS='.' read -r major minor patch <<< "$current_version"
+        case "$bump" in
+          major)
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+          minor)
+            minor=$((minor + 1))
+            patch=0
+            ;;
+          patch)
+            patch=$((patch + 1))
+            ;;
+        esac
+
+        new_tag="${TAG_PREFIX}${major}.${minor}.${patch}"
+        echo "new_tag=$new_tag" >> "$GITHUB_OUTPUT"
+        echo "New tag is $new_tag"
+
+        if git rev-parse "$new_tag" >/dev/null 2>&1; then
+          echo "::error::Tag $new_tag already exists"
+          exit 1
+        fi
+
+        if [[ "$is_release_branch" != "true" ]]; then
+          echo "Branch $branch is not a release branch. Skipping tag creation."
+          exit 0
+        fi
+
+        if [[ "$DRY_RUN" == "true" ]]; then
+          echo "Dry run: not creating tag."
+          exit 0
+        fi
+
+        git tag "$new_tag" "$GITHUB_SHA"
+        git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${new_tag}"
