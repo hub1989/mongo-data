@@ -88,9 +88,7 @@ func (p MongoRepository[T]) Update(ctx context.Context, entity T) (*T, error) {
 	}
 
 	opts := options.UpdateOne().SetUpsert(true)
-
 	_, err := p.Collection.UpdateOne(ctx, idFilter, updateFilter, opts)
-
 	if err != nil {
 		log.WithError(err).Error("could not update entity with ID: ", entity.GetId())
 		return nil, err
