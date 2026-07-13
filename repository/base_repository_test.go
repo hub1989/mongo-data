@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hub1989/mongo-data/base_entity"
-	"github.com/hub1989/mongo-data/configuration"
+	"github.com/hub1989/mongo-data/v4/base_entity"
+	"github.com/hub1989/mongo-data/v4/configuration"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

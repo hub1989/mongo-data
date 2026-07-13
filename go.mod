@@ -1,4 +1,4 @@
-module github.com/hub1989/mongo-data
+module github.com/hub1989/mongo-data/v4
 
 go 1.25.4
 
