@@ -21,6 +21,10 @@ inputs:
     description: "Calculate the next tag without pushing it."
     required: false
     default: "false"
+  dispatch_workflow:
+    description: "Workflow file to dispatch after creating the tag. Leave empty to disable."
+    required: false
+    default: ""
 
 outputs:
   previous_tag:
@@ -44,6 +48,7 @@ runs:
         TAG_PREFIX: ${{ inputs.tag_prefix }}
         RELEASE_BRANCHES: ${{ inputs.release_branches }}
         DRY_RUN: ${{ inputs.dry_run }}
+        DISPATCH_WORKFLOW: ${{ inputs.dispatch_workflow }}
       run: |
         set -euo pipefail
 
@@ -149,3 +154,13 @@ runs:
 
         git tag "$new_tag" "$GITHUB_SHA"
         git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${new_tag}"
+
+        if [[ -n "$DISPATCH_WORKFLOW" ]]; then
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/${DISPATCH_WORKFLOW}/dispatches" \
+            --data "{\"ref\":\"${new_tag}\"}"
+        fi
